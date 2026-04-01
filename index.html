@@ -1,405 +1,253 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Numerics Dots Exact Half Six Restored</title>
+<title>Six or Not Six</title>
 <style>
-  body{
-    margin:0;
-    background:#ffffff;
-    font-family:"Century Gothic", Arial, sans-serif;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    min-height:100vh;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'Arial', sans-serif;
+}
+
+.container {
+  text-align: center;
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  width: 95%;
+  max-width: 1400px;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 32px;
+}
+
+.canvas {
+  width: 100%;
+  height: 700px;
+  background: #f9f9f9;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 3px solid #667eea;
+  margin: 20px 0;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dot {
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.slide-in {
+  animation: slideIn 1.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translate(var(--startX), var(--startY)) scale(0.5);
   }
-  .slide{
-    width:1800px;
-    height:1000px;
-    max-width:96vw;
-    max-height:78vh;
-    aspect-ratio:9/5;
-    position:relative;
-    overflow:hidden;
-    border:1px solid #d9d9d9;
-    background:#ffffff;
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
   }
-  .dot{
-    position:absolute;
-    border-radius:50%;
-    transform:translate(-50%,-50%);
-    box-shadow:0 10px 18px rgba(0,0,0,0.16);
-    transition:
-      left 1.15s ease-in-out,
-      top 1.15s ease-in-out,
-      width 0.9s ease-in-out,
-      height 0.9s ease-in-out,
-      background-color 0.9s ease-in-out,
-      opacity 0.25s ease-in-out;
-    opacity:1;
+}
+
+.fade-out {
+  animation: fadeOut 1s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
   }
-  .controls{
-    margin-top:18px;
-    display:flex;
-    gap:14px;
+  100% {
+    opacity: 0;
   }
-  button{
-    font-family:"Century Gothic", Arial, sans-serif;
-    font-size:28px;
-    padding:16px 34px;
-    background:#ffffff;
-    border:1px solid #999;
-    cursor:pointer;
-  }
-  button:hover{
-    background:#f4f4f4;
-  }
+}
+
+.controls {
+  margin: 20px 0;
+}
+
+button {
+  font-size: 18px;
+  padding: 12px 30px;
+  margin: 0 10px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+}
 </style>
 </head>
 <body>
-  <div class="slide" id="slide"></div>
+
+<div class="container">
+  <h1>Six or Not Six</h1>
+  
+  <div class="canvas" id="canvas"></div>
+  
   <div class="controls">
-    <button id="startBtn">Start</button>
-    <button id="pauseBtn">Pause</button>
-    <button id="resetBtn">Reset</button>
+    <button onclick="startAnimation()">▶ Start</button>
+    <button onclick="stopAnimation()">⏸ Pause</button>
   </div>
+</div>
 
 <script>
-const slide = document.getElementById("slide");
-const startBtn = document.getElementById("startBtn");
-const pauseBtn = document.getElementById("pauseBtn");
-const resetBtn = document.getElementById("resetBtn");
-
-const MAX_DOTS = 6;
-const dotEls = [];
-for(let i = 0; i < MAX_DOTS; i++){
-  const d = document.createElement("div");
-  d.className = "dot";
-  slide.appendChild(d);
-  dotEls.push(d);
-}
-
-let running = false;
-let timer = null;
-let frameIndex = 0;
-let sequence = [];
-
-const backgrounds = [
-  "#ffffff",
-  "#f2f2f2",
-  "#e8f0fe",
-  "#fff3cd",
-  "#e6ffe6",
-  "#fce4ec",
-  "#e0f7fa",
-  "#f4ecff"
+const COLORS = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+  '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#52B788'
 ];
 
-const palette = [
-  "#000000",
-  "#2E75B6",
-  "#C00000",
-  "#6AA84F",
-  "#7F60A8",
-  "#E69138",
-  "#3C78D8",
-  "#CC4125",
-  "#8E7CC3",
-  "#93C47D"
-];
+const CANVAS = document.getElementById('canvas');
 
-const dotSizes = [46, 64, 82, 100, 118, 136];
-const margin = 120;
-const extraGap = 16;
+let isRunning = false;
+let timeoutId = null;
 
-function shuffle(arr){
-  const a = [...arr];
-  for(let i = a.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function setRandomBackground(){
-  slide.style.background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+function getRandomSize() {
+  return getRandomInt(20, 60);
 }
 
-function hiddenDot(){
+function fadeOutCanvas() {
+  return new Promise(resolve => {
+    const dots = CANVAS.querySelectorAll('.dot');
+    if (dots.length === 0) {
+      resolve();
+      return;
+    }
+    dots.forEach(dot => {
+      dot.classList.add('fade-out');
+    });
+    setTimeout(() => {
+      CANVAS.innerHTML = '';
+      resolve();
+    }, 1000);
+  });
+}
+
+function getRandomPosition(dotSize) {
+  const maxX = CANVAS.offsetWidth - dotSize;
+  const maxY = CANVAS.offsetHeight - dotSize;
   return {
-    x: slide.clientWidth / 2,
-    y: slide.clientHeight / 2,
-    size: 0,
-    color: "#000000",
-    visible: false
+    x: getRandomInt(0, maxX),
+    y: getRandomInt(0, maxY)
   };
 }
 
-function pad(points){
-  const out = points.map(p => ({...p, visible:true}));
-  while(out.length < MAX_DOTS) out.push(hiddenDot());
-  return out;
+function isValidPosition(positions, x, y, minDistance, dotSize) {
+  for (let pos of positions) {
+    const distance = Math.sqrt((pos.x - x) ** 2 + (pos.y - y) ** 2);
+    if (distance < minDistance + dotSize) return false;
+  }
+  return true;
 }
 
-function exactHalfQuantities(rounds){
-  const arr = [];
-  for(let i = 0; i < rounds / 2; i++) arr.push(6);
-  for(let i = 0; i < rounds / 2; i++) arr.push([1,2,3,4,5][Math.floor(Math.random() * 5)]);
-  return shuffle(arr);
+function getRandomStartPosition() {
+  const side = getRandomInt(0, 3);
+  switch(side) {
+    case 0: return { x: -100, y: Math.random() * CANVAS.offsetHeight }; // left
+    case 1: return { x: CANVAS.offsetWidth + 100, y: Math.random() * CANVAS.offsetHeight }; // right
+    case 2: return { x: Math.random() * CANVAS.offsetWidth, y: -100 }; // top
+    case 3: return { x: Math.random() * CANVAS.offsetWidth, y: CANVAS.offsetHeight + 100 }; // bottom
+  }
 }
 
-function randomStart(count){
-  const width = slide.clientWidth;
-  const height = slide.clientHeight;
-  const pts = [];
-  let attempts = 0;
-
-  while(pts.length < count && attempts < 12000){
-    attempts++;
-    const size = dotSizes[Math.floor(Math.random() * dotSizes.length)];
-    const radius = size / 2;
-    const x = margin + radius + Math.random() * Math.max(1, width - (margin * 2) - size);
-    const y = margin + radius + Math.random() * Math.max(1, height - (margin * 2) - size);
-    const color = palette[Math.floor(Math.random() * palette.length)];
-
-    let ok = true;
-    for(const p of pts){
-      const dx = x - p.x;
-      const dy = y - p.y;
-      const minDist = (size / 2) + (p.size / 2) + extraGap;
-      if(Math.sqrt(dx * dx + dy * dy) < minDist){
-        ok = false;
+async function displayDots() {
+  await fadeOutCanvas();
+  
+  const isSix = Math.random() < 0.5;
+  const totalDots = isSix ? 6 : [1, 2, 3, 4, 5, 7][getRandomInt(0, 5)];
+  
+  const positions = [];
+  let dotDelay = 0;
+  
+  for (let i = 0; i < totalDots; i++) {
+    const size = getRandomSize();
+    const color = COLORS[getRandomInt(0, COLORS.length - 1)];
+    
+    let attempts = 0;
+    while (attempts < 50) {
+      const finalPos = getRandomPosition(size);
+      
+      if (isValidPosition(positions, finalPos.x, finalPos.y, 80, size)) {
+        const startPos = getRandomStartPosition();
+        
+        setTimeout(() => {
+          const dot = document.createElement('div');
+          dot.className = 'dot';
+          dot.style.width = size + 'px';
+          dot.style.height = size + 'px';
+          dot.style.backgroundColor = color;
+          dot.style.left = finalPos.x + 'px';
+          dot.style.top = finalPos.y + 'px';
+          dot.style.setProperty('--startX', startPos.x + 'px');
+          dot.style.setProperty('--startY', startPos.y + 'px');
+          dot.classList.add('slide-in');
+          CANVAS.appendChild(dot);
+        }, dotDelay);
+        
+        dotDelay += 200;
+        positions.push({ x: finalPos.x + size / 2, y: finalPos.y + size / 2 });
         break;
       }
+      attempts++;
     }
-    if(ok) pts.push({x, y, size, color});
-  }
-
-  return pad(pts);
-}
-
-function lineArrangement(count){
-  const width = slide.clientWidth;
-  const height = slide.clientHeight;
-  const size = dotSizes[Math.floor(Math.random() * dotSizes.length)];
-  const gap = size * 0.75;
-  const totalWidth = count * size + (count - 1) * gap;
-  let x = (width - totalWidth) / 2 + size / 2;
-  const y = height / 2;
-  const colors = shuffle(palette).slice(0, count);
-  const pts = [];
-  for(let i = 0; i < count; i++){
-    pts.push({x, y, size, color: colors[i]});
-    x += size + gap;
-  }
-  return pad(pts);
-}
-
-function twoRowsArrangement(count){
-  const width = slide.clientWidth;
-  const height = slide.clientHeight;
-  const size = dotSizes[Math.floor(Math.random() * dotSizes.length)];
-  const colsTop = Math.ceil(count / 2);
-  const colsBottom = count - colsTop;
-  const gapX = size * 0.95;
-  const gapY = size * 0.95;
-  const colors = shuffle(palette).slice(0, count);
-  const pts = [];
-  const widthTop = colsTop * size + Math.max(0, colsTop - 1) * gapX;
-  const widthBottom = colsBottom * size + Math.max(0, colsBottom - 1) * gapX;
-  const startXTop = width / 2 - widthTop / 2 + size / 2;
-  const startXBottom = width / 2 - widthBottom / 2 + size / 2;
-  const topY = height / 2 - (size + gapY) / 2;
-  const bottomY = height / 2 + (size + gapY) / 2;
-
-  let idx = 0;
-  for(let i = 0; i < colsTop; i++){
-    pts.push({x:startXTop + i * (size + gapX), y:topY, size, color:colors[idx++]});
-  }
-  for(let i = 0; i < colsBottom; i++){
-    pts.push({x:startXBottom + i * (size + gapX), y:bottomY, size, color:colors[idx++]});
-  }
-  return pad(pts);
-}
-
-function triangleArrangement(count){
-  const width = slide.clientWidth;
-  const height = slide.clientHeight;
-  const size = dotSizes[Math.floor(Math.random() * dotSizes.length)];
-  const gapX = size * 0.9;
-  const gapY = size * 0.85;
-  const colors = shuffle(palette).slice(0, count);
-  const rows = [];
-  let remaining = count;
-  let rowSize = 1;
-  while(remaining > 0){
-    const take = Math.min(rowSize, remaining);
-    rows.push(take);
-    remaining -= take;
-    rowSize++;
-  }
-  const pts = [];
-  let idx = 0;
-  const totalHeight = rows.length * size + (rows.length - 1) * gapY;
-  const startY = height / 2 - totalHeight / 2 + size / 2;
-
-  rows.forEach((len, r) => {
-    const rowWidth = len * size + (len - 1) * gapX;
-    const startX = width / 2 - rowWidth / 2 + size / 2;
-    for(let c = 0; c < len; c++){
-      pts.push({
-        x:startX + c * (size + gapX),
-        y:startY + r * (size + gapY),
-        size,
-        color:colors[idx++]
-      });
-    }
-  });
-  return pad(pts);
-}
-
-function circleArrangement(count){
-  const width = slide.clientWidth;
-  const height = slide.clientHeight;
-  const size = dotSizes[Math.floor(Math.random() * dotSizes.length)];
-  const colors = shuffle(palette).slice(0, count);
-  const radius = Math.max(120, size * 1.7);
-  const pts = [];
-  const startAngle = -Math.PI / 2;
-  for(let i = 0; i < count; i++){
-    const angle = startAngle + (Math.PI * 2 * i / count);
-    pts.push({
-      x:width / 2 + radius * Math.cos(angle),
-      y:height / 2 + radius * Math.sin(angle),
-      size,
-      color:colors[i]
-    });
-  }
-  return pad(pts);
-}
-
-function overlaps(a, b){
-  const dx = a.x - b.x;
-  const dy = a.y - b.y;
-  const minDist = (a.size / 2) + (b.size / 2) + extraGap;
-  return Math.sqrt(dx * dx + dy * dy) < minDist;
-}
-
-function enforceNoOverlap(points){
-  const width = slide.clientWidth;
-  const height = slide.clientHeight;
-  const pts = points.map(p => ({...p}));
-
-  for(let pass = 0; pass < 24; pass++){
-    let moved = false;
-
-    for(let i = 0; i < pts.length; i++){
-      if(pts[i].visible === false) continue;
-      for(let j = i + 1; j < pts.length; j++){
-        if(pts[j].visible === false) continue;
-        if(!overlaps(pts[i], pts[j])) continue;
-
-        let dx = pts[j].x - pts[i].x;
-        let dy = pts[j].y - pts[i].y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-
-        if(dist === 0){
-          dx = 1;
-          dy = 0;
-          dist = 1;
-        }
-
-        const needed = (pts[i].size / 2) + (pts[j].size / 2) + extraGap;
-        const push = (needed - dist) / 2;
-        const ux = dx / dist;
-        const uy = dy / dist;
-
-        pts[i].x -= ux * push;
-        pts[i].y -= uy * push;
-        pts[j].x += ux * push;
-        pts[j].y += uy * push;
-
-        const ri = pts[i].size / 2;
-        const rj = pts[j].size / 2;
-
-        pts[i].x = Math.max(margin + ri, Math.min(width - margin - ri, pts[i].x));
-        pts[i].y = Math.max(margin + ri, Math.min(height - margin - ri, pts[i].y));
-        pts[j].x = Math.max(margin + rj, Math.min(width - margin - rj, pts[j].x));
-        pts[j].y = Math.max(margin + rj, Math.min(height - margin - rj, pts[j].y));
-
-        moved = true;
-      }
-    }
-    if(!moved) break;
-  }
-
-  return pts;
-}
-
-function buildSequence(){
-  const arrangements = [lineArrangement, twoRowsArrangement, triangleArrangement, circleArrangement];
-  const rounds = 24;
-  const quantities = exactHalfQuantities(rounds);
-  const seq = [];
-
-  for(let i = 0; i < rounds; i++){
-    const q = quantities[i];
-    seq.push(enforceNoOverlap(randomStart(q)));
-    const arrangement = shuffle(arrangements)[0];
-    seq.push(enforceNoOverlap(arrangement(q)));
-  }
-  return seq;
-}
-
-function apply(points){
-  for(let i = 0; i < MAX_DOTS; i++){
-    const p = points[i];
-    const el = dotEls[i];
-    el.style.left = p.x + "px";
-    el.style.top = p.y + "px";
-    el.style.width = p.size + "px";
-    el.style.height = p.size + "px";
-    el.style.backgroundColor = p.color;
-    el.style.opacity = p.visible === false ? "0" : "1";
   }
 }
 
-function nextFrame(){
-  if(!running) return;
-  setRandomBackground();
-  apply(sequence[frameIndex]);
-  frameIndex = (frameIndex + 1) % sequence.length;
-  timer = setTimeout(nextFrame, 1850);
+function startAnimation() {
+  if (isRunning) return;
+  isRunning = true;
+  displayDots();
+  scheduleNext();
 }
 
-function startAnimation(){
-  if(running) return;
-  running = true;
-  clearTimeout(timer);
-  nextFrame();
+function scheduleNext() {
+  if (!isRunning) return;
+  timeoutId = setTimeout(() => {
+    displayDots();
+    scheduleNext();
+  }, 5500);
 }
 
-function pauseAnimation(){
-  running = false;
-  clearTimeout(timer);
+function stopAnimation() {
+  isRunning = false;
+  clearTimeout(timeoutId);
 }
-
-function resetAnimation(){
-  pauseAnimation();
-  frameIndex = 0;
-  sequence = buildSequence();
-  setRandomBackground();
-  apply(sequence[0]);
-}
-
-startBtn.addEventListener("click", startAnimation);
-pauseBtn.addEventListener("click", pauseAnimation);
-resetBtn.addEventListener("click", resetAnimation);
-
-resetAnimation();
 </script>
+
 </body>
 </html>
