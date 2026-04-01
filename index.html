@@ -129,6 +129,9 @@ const COLORS = [
 ];
 
 const CANVAS = document.getElementById('canvas');
+const PADDING = 100;
+const MIN_DOT_SIZE = 70;
+const MAX_DOT_SIZE = 120;
 
 let isRunning = false;
 let timeoutId = null;
@@ -138,7 +141,7 @@ function getRandomInt(min, max) {
 }
 
 function getRandomSize() {
-  return getRandomInt(20, 60);
+  return getRandomInt(MIN_DOT_SIZE, MAX_DOT_SIZE);
 }
 
 function fadeOutCanvas() {
@@ -159,11 +162,14 @@ function fadeOutCanvas() {
 }
 
 function getRandomPosition(dotSize) {
-  const maxX = CANVAS.offsetWidth - dotSize;
-  const maxY = CANVAS.offsetHeight - dotSize;
+  const maxX = CANVAS.offsetWidth - dotSize - PADDING;
+  const maxY = CANVAS.offsetHeight - dotSize - PADDING;
+  const minX = PADDING;
+  const minY = PADDING;
+  
   return {
-    x: getRandomInt(0, maxX),
-    y: getRandomInt(0, maxY)
+    x: getRandomInt(minX, maxX),
+    y: getRandomInt(minY, maxY)
   };
 }
 
@@ -178,10 +184,10 @@ function isValidPosition(positions, x, y, minDistance, dotSize) {
 function getRandomStartPosition() {
   const side = getRandomInt(0, 3);
   switch(side) {
-    case 0: return { x: -100, y: Math.random() * CANVAS.offsetHeight }; // left
-    case 1: return { x: CANVAS.offsetWidth + 100, y: Math.random() * CANVAS.offsetHeight }; // right
-    case 2: return { x: Math.random() * CANVAS.offsetWidth, y: -100 }; // top
-    case 3: return { x: Math.random() * CANVAS.offsetWidth, y: CANVAS.offsetHeight + 100 }; // bottom
+    case 0: return { x: -200, y: Math.random() * CANVAS.offsetHeight };
+    case 1: return { x: CANVAS.offsetWidth + 200, y: Math.random() * CANVAS.offsetHeight };
+    case 2: return { x: Math.random() * CANVAS.offsetWidth, y: -200 };
+    case 3: return { x: Math.random() * CANVAS.offsetWidth, y: CANVAS.offsetHeight + 200 };
   }
 }
 
@@ -202,7 +208,7 @@ async function displayDots() {
     while (attempts < 50) {
       const finalPos = getRandomPosition(size);
       
-      if (isValidPosition(positions, finalPos.x, finalPos.y, 80, size)) {
+      if (isValidPosition(positions, finalPos.x + size / 2, finalPos.y + size / 2, 100, size)) {
         const startPos = getRandomStartPosition();
         
         setTimeout(() => {
